@@ -1,0 +1,31 @@
+currentBuild.displayName = "Tomcat-Deployment-"+currentBuild.number
+
+pipeline {
+    agent any
+tools {
+  maven 'mvn_home'
+}
+    stages {
+        stage('SCM-Checkout') {
+            steps {
+                git branch: 'main', credentialsId: 'git-credentials', 
+				url: 'https://github.com/vikas99341/tomcat-jenkins.git'
+            }
+        }
+        stage('Maven-Goal') {
+            steps {
+                sh 'mvn clean compile package'
+            }
+        }
+        stage('Tomcat-deployment') {
+            steps {
+                sshagent(['ec2-user']) {
+					sh """
+						scp -o StrictHostKeyChecking=no target/jenkins-maven-19-02.war ec2-user@44.212.8.219:/opt/tomcat/webapps/
+						
+					"""
+				}
+            }
+        }
+    }
+}
